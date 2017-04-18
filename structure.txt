@@ -1,0 +1,26 @@
+Teacher {
+	id
+	name
+	table of group ids (teacher timetable)
+}
+
+Student {
+	id
+	name
+	table of group ids (student timetable)
+	class (decode from id)
+}
+
+Classroom {
+	id
+	name
+	table of group ids (classroom timetable)
+}
+
+Group {
+	id
+	teacher id
+	classroom id
+	week day, lesson number
+	list of student ids
+}

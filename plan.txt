@@ -1,0 +1,10 @@
+iterate over teachers
+	create teacher objects
+	for each group id
+		create group objects (not available elsewhere)
+		
+iterate over classrooms
+	create classroom objects
+
+iterate over students
+	create student objects
