@@ -4,14 +4,16 @@ import json
 
 # print("Įveskite tvarkaraščių tinklapio adresą:\n")
 # rootUrl = input()
-rootUrl = "http://www.azuolynas.klaipeda.lm.lt/tvark/tvark_2016-2017_2pusm/index.htm"
-page = requests.get(rootUrl)
+
+baseUrl = "http://www.azuolynas.klaipeda.lm.lt/tvark/tvark_2016-2017_2pusm/"
+
+page = requests.get(baseUrl + "index.htm")
+
 tree = html.fromstring(page.content)
+tree.make_links_absolute(baseUrl)
 
-rowCount = tree.xpath("count(//table//tr)")
-for i in range(1, int(rowCount) + 1):
-    print(i)
+table = tree.xpath("/html/body/center[2]/center/table")[0]
 
-test = tree.xpath("//table/*/tr[147]")
-print(test)
+# html.open_in_browser(table)
+
 # json_data = json.dumps(data)
