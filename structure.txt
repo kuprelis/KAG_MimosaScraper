@@ -2,6 +2,7 @@ Node {
     id
     name
     type (teacher, student, classroom)
+    list of group ids
 }
 
 Group {
