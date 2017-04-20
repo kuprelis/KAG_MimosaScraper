@@ -14,6 +14,5 @@ Index page
 		First	/html/body/font/center[2]/font/center/b/table/tbody/tr[40]/td[1]/a
 		Last	/html/body/font/center[2]/font/center/b/table/tbody/tr[144]/td[1]/a
 		
-Student timetable entry
-	Cell 		/html/body/font/center[2]/table/tbody/tr[3]/td[3]
-	Group link 	/html/body/font/center[2]/table/tbody/tr[3]/td[3]/font/b/a
+Node
+    Name /html/body/font/center[2]/table/tbody/tr[1]/td/font/b

@@ -1,1 +1,1 @@
-Implement boundary detection
+Fix absolute links, get rid of get_id
