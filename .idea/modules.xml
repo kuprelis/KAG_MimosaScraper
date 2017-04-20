@@ -3,7 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/KAG_MimosaScraper.iml" filepath="$PROJECT_DIR$/.idea/KAG_MimosaScraper.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/parser.iml" filepath="$PROJECT_DIR$/.idea/parser.iml" />
+      <module fileurl="file://C:\Users\Simas\Documents\PyCharm\KAG_MimosaScraper\.idea\KAG_MimosaScraper.iml" filepath="C:\Users\Simas\Documents\PyCharm\KAG_MimosaScraper\.idea\KAG_MimosaScraper.iml" />
+      <module fileurl="file://C:\Users\Simas\Documents\PyCharm\KAG_MimosaScraper\.idea\parser.iml" filepath="C:\Users\Simas\Documents\PyCharm\KAG_MimosaScraper\.idea\parser.iml" />
     </modules>
   </component>
 </project>

@@ -1,26 +1,13 @@
-Teacher {
-	id
-	name
-	table of group ids (teacher timetable)
-}
-
-Student {
-	id
-	name
-	table of group ids (student timetable)
-	class (decode from id)
-}
-
-Classroom {
-	id
-	name
-	table of group ids (classroom timetable)
+Node {
+    id
+    name
+    type (teacher, student, classroom)
 }
 
 Group {
-	id
-	teacher id
-	classroom id
 	week day, lesson number
-	list of student ids
+	id
+	teacher node id
+	classroom node id
+	list of student node ids
 }
