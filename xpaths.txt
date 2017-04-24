@@ -16,3 +16,6 @@ Index page
 		
 Node
     Name /html/body/font/center[2]/table/tbody/tr[1]/td/font/b
+
+Group
+    ID, name /html/body/font/center[2]/table/tbody/tr[1]/td
