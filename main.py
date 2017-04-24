@@ -7,17 +7,15 @@ import json
 class Node:
     def __init__(self, name, cat):
         self.name = name
-        self.cat = cat  # teacher = 0, room = 1, student = 2
+        self.cat = cat  # teacher = 1, room = 2, student = 3
         self.groups = set()
 
 
 class Group:
     def __init__(self, name):
         self.name = name
-        self.lessons = []
-        self.teachers = []
-        self.rooms = []
-        self.students = []
+        self.times = []
+        self.nodes = []
 
 
 # print("Įveskite tvarkaraščių tinklapio index.htm adresą (pvz. http://www.example.com/*/index.htm)\n")
@@ -48,10 +46,11 @@ def get_id(page_url):
 
 
 def create_group(group_url):
-    """
-    group_tree = get_tree(group_url)
-    group_table = group_tree
-    top_string = group_tree.xpath("/html/body/center[2]/table/tr[1]/td/text()")[0]
+    if get_id(group_url) in groups:
+        return
+
+    group_table = get_tree(group_url).xpath("/html/body/center[2]/table")[0]
+    top_string = group_table.xpath("./tr[1]/td/text()")[0]
 
     a, b = None, None
     for i in range(len(top_string)):
@@ -61,10 +60,31 @@ def create_group(group_url):
             else:
                 b = i - 1
                 break
-    group_name = top_string[a:b]
+    group = Group(top_string[a:b])
 
-    print(group_name)
-    """
+    for node in group_table.xpath("./tr[2]/td[1]/text()"):
+        for i in range(len(node)):
+            if node[i] == '\x97':
+                group.nodes.append(node[2:i - 1])  # ignore 2 invisible chars
+                break
+
+    for time in group_table.xpath("./tr[2]/td[2]/text()"):
+        time = time[2:]
+        day = time[:3]
+        if day == "Pir":
+            day = 1
+        elif day == "Ant":
+            day = 2
+        elif day == "Tre":
+            day = 3
+        elif day == "Ket":
+            day = 4
+        elif day == "Pen":
+            day = 5
+        else:
+            continue
+
+    groups[get_id(group_url)] = group
     return
 
 
@@ -81,7 +101,8 @@ def create_node(node_url, node_cat):
     return
 
 current_cat = 0
-# create_group("3_it_p_2_1.htm")
+create_group("3_kkb_2_2.htm")
+"""
 for row in get_tree(index_url).xpath("/html/body/center[2]/center/table/tr"):
     if int(row.xpath("count(./td)")) == 1:
         current_cat += 1
@@ -89,3 +110,4 @@ for row in get_tree(index_url).xpath("/html/body/center[2]/center/table/tr"):
 
     for link in row.xpath(".//a/@href"):
         create_node(link, current_cat)
+"""
