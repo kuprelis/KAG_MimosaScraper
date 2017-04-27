@@ -18,42 +18,43 @@ class Group:
         self.nodes = []  # (day, lesson number)
 
 
-class CustomEncoder(json.JSONEncoder):  # TODO fix this
+class CustomEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Node):
-            return obj.name
-        elif isinstance(obj, Group):
-            return obj.name
+            return {
+                "name": obj.name,
+                "cat": obj.cat,
+                "groups": list(obj.groups)
+            }
+        if isinstance(obj, Group):
+            return {
+                "name": obj.name,
+                "times": obj.times,
+                "nodes": obj.nodes
+            }
         return json.JSONEncoder.default(self, obj)
 
 
-# print("Įveskite tvarkaraščių tinklapio index.htm adresą (pvz. http://www.example.com/*/index.htm)\n")
-# base_url = input()[:-9]
-base_url = "http://www.azuolynas.klaipeda.lm.lt/tvark/tvark_2016-2017_2pusm/"
+print("Įveskite tvarkaraščių tinklapio index.htm adresą, pvz.: http://www.example.com/*/index.htm\n")
+base_url = input().strip()[:-9]
 index_url = "index.htm"
 groups = {}
 nodes = {}
 
 
-def decode_html(html_string):
-    converted = UnicodeDammit(html_string)
-    if not converted.unicode_markup:
-        raise UnicodeDecodeError(
-            "Failed to detect encoding, tried [%s]",
-            ', '.join(converted.tried_encodings))
-    return converted.unicode_markup
-
-
 def get_tree(page_url):
-    page = requests.get(base_url + page_url)
-    tree = html.fromstring(decode_html(page.content))
+    resp = requests.get(base_url + page_url.lower())
+    dammit = UnicodeDammit(resp.content, ["windows-1257"])
+    tree = html.fromstring(dammit.unicode_markup)
     return tree
 
 
 def get_id(page_url, is_node):
     if is_node:
-        return page_url[5:-4]
-    return page_url[:-4]
+        ret = page_url[5:-4]  # ignore "x3001"
+    else:
+        ret = page_url[:-4]
+    return ret.lower()
 
 
 def create_group(group_url, group_name):
@@ -69,11 +70,8 @@ def create_group(group_url, group_name):
         node_id = node[:node.index(" ")].lstrip()  # trim invisible chars
         group.nodes.append(str.lower(node_id))
 
-    # TODO get room node from time
     for time in table.xpath("./tr[2]/td[2]/text()"):
-        time = time[2:]
-        day = time[:3]
-
+        day = time[2:5]
         if day == "Pir":
             day = 1
         elif day == "Ant":
@@ -87,18 +85,40 @@ def create_group(group_url, group_name):
         else:
             continue
 
-        if time[5] == "-":
-            for i in range(int(time[4]), int(time[6]) + 1):
-                group.times.append((day, i))
+        time = time[6:]
+        times = []
+        rooms = []
+
+        if time[1] == "-":
+            for i in range(int(time[0]), int(time[2]) + 1):
+                times.append((day, i))
+            time = time[4:]
         else:
-            group.times.append((day, int(time[4])))
+            times.append((day, int(time[0])))
+            time = time[2:]
+
+        if len(time) > 0 and time[0] == "[":
+            time = time[1:-1]
+            while True:
+                comma = time.find(",")
+                if comma != -1:
+                    rooms.append(time[:comma].lower())
+                    time = time[comma + 1:]
+                else:
+                    rooms.append(time.lower())
+                    break
+
+        if len(rooms) > 0:
+            for i in range(len(rooms)):
+                group.times.append((times[i], rooms[i]))
+        else:
+            group.times.extend(times)
 
     groups[get_id(group_url, False)] = group
     return
 
 
 def create_node(node_url, node_cat):
-    # TODO check result code
     table = get_tree(node_url).xpath("/html/body/center[2]/table")[0]
     name = table.xpath("./tr[1]/td/font/b/text()")[0]
     node = Node(name.rstrip(), node_cat)  # trim spaces on the right
@@ -115,8 +135,6 @@ def create_node(node_url, node_cat):
     return
 
 current_cat = 0
-# create_group("3_lie_jov_1_45.htm", "tst")
-
 for row in get_tree(index_url).xpath("/html/body/center[2]/center/table/tr"):
     if int(row.xpath("count(./td)")) == 1:
         current_cat += 1
@@ -125,8 +143,11 @@ for row in get_tree(index_url).xpath("/html/body/center[2]/center/table/tr"):
     for link in row.xpath(".//a/@href"):
         create_node(link, current_cat)
 
-with open("groups.json", "w") as output:
-    json.dump(groups, output, cls=CustomEncoder)
 
-with open("nodes.json", "w") as output:
-    json.dump(nodes, output, cls=CustomEncoder)
+def write(filename, obj):
+    with open(filename, "w", encoding="utf-8") as output:
+        json.dump(obj, output, cls=CustomEncoder, ensure_ascii=False)
+    return
+
+write("groups.json", groups)
+write("nodes.json", nodes)
