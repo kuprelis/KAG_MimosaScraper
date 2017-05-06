@@ -14,8 +14,8 @@ class Node:
 class Group:
     def __init__(self, name):
         self.name = name
-        self.times = []
-        self.nodes = []  # (day, lesson number)
+        self.times = []  # (day, lesson number, room if given)
+        self.nodes = []
 
 
 class CustomEncoder(json.JSONEncoder):
@@ -36,8 +36,10 @@ class CustomEncoder(json.JSONEncoder):
 
 
 print("Įveskite tvarkaraščių tinklapio index.htm adresą, pvz.: http://www.example.com/*/index.htm\n")
-base_url = input().strip()[:-9]
-index_url = "index.htm"
+base_url = input().strip()
+pos = base_url.rfind("/") + 1
+index_url = base_url[pos:]
+base_url = base_url[:pos]
 groups = {}
 nodes = {}
 
@@ -50,10 +52,11 @@ def get_tree(page_url):
 
 
 def get_id(page_url, is_node):
+    ext = page_url.rfind(".")
     if is_node:
-        ret = page_url[5:-4]  # ignore "x3001"
+        ret = page_url[5:ext]  # ignore "x3001"
     else:
-        ret = page_url[:-4]
+        ret = page_url[:ext]
     return ret.lower()
 
 
@@ -65,38 +68,39 @@ def create_group(group_url, group_name):
     group = Group(group_name)
 
     for node in table.xpath("./tr[2]/td[1]/text()"):
-        if len(node) <= 2:
+        node = node.strip()
+        if len(node) == 0:
             continue
-        node_id = node[:node.index(" ")].lstrip()  # trim invisible chars
-        group.nodes.append(str.lower(node_id))
+        node_id = node[:node.find(" ")]
+        group.nodes.append(node_id.lower())
 
     for time in table.xpath("./tr[2]/td[2]/text()"):
-        day = time[2:5]
+        time = time.strip()
+
+        day = time[:3]
         if day == "Pir":
-            day = 1
+            day_id = 1
         elif day == "Ant":
-            day = 2
+            day_id = 2
         elif day == "Tre":
-            day = 3
+            day_id = 3
         elif day == "Ket":
-            day = 4
+            day_id = 4
         elif day == "Pen":
-            day = 5
+            day_id = 5
         else:
             continue
+        time = time[4:]
 
-        time = time[6:]
-        times = []
-        rooms = []
-
-        if time[1] == "-":
-            for i in range(int(time[0]), int(time[2]) + 1):
-                times.append((day, i))
-            time = time[4:]
-        else:
-            times.append((day, int(time[0])))
+        first = int(time[0])
+        last = first
+        time = time[1:]
+        if len(time) > 0 and time[0] == "-":
+            last = int(time[1])
             time = time[2:]
+        time = time[1:]
 
+        rooms = []
         if len(time) > 0 and time[0] == "[":
             time = time[1:-1]
             while True:
@@ -108,11 +112,11 @@ def create_group(group_url, group_name):
                     rooms.append(time.lower())
                     break
 
-        if len(rooms) > 0:
-            for i in range(len(rooms)):
-                group.times.append((times[i], rooms[i]))
-        else:
-            group.times.extend(times)
+        for i in range(first, last + 1):
+            if len(rooms) > 0:
+                group.times.append((day_id, i, rooms[i - first]))
+            else:
+                group.times.append((day_id, i))
 
     groups[get_id(group_url, False)] = group
     return
@@ -121,14 +125,14 @@ def create_group(group_url, group_name):
 def create_node(node_url, node_cat):
     table = get_tree(node_url).xpath("/html/body/center[2]/table")[0]
     name = table.xpath("./tr[1]/td/font/b/text()")[0]
-    node = Node(name.rstrip(), node_cat)  # trim spaces on the right
+    node = Node(name.strip(), node_cat)
 
     for group in table.xpath(".//a"):
         url = group.xpath("./@href")[0]
         if url == index_url:
             continue
-        name = group.xpath("./text()")[0]
-        create_group(url, name)
+        group_name = group.xpath("./text()")[0]
+        create_group(url, group_name.strip())
         node.groups.add(get_id(url, False))
 
     nodes[get_id(node_url, True)] = node
