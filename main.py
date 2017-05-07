@@ -148,10 +148,6 @@ for row in get_tree(index_url).xpath("/html/body/center[2]/center/table/tr"):
         create_node(link, current_cat)
 
 
-def write(filename, obj):
-    with open(filename, "w", encoding="utf-8") as output:
-        json.dump(obj, output, cls=CustomEncoder, ensure_ascii=False)
-    return
-
-write("groups.json", groups)
-write("nodes.json", nodes)
+data = {"nodes": nodes, "groups": groups}
+with open("data.json", "w", encoding="utf-8") as output:
+    json.dump(data, output, cls=CustomEncoder, ensure_ascii=False)
