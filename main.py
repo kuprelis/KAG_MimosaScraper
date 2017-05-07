@@ -30,7 +30,7 @@ class CustomEncoder(json.JSONEncoder):
         if isinstance(obj, Node):
             return {
                 "name": obj.name,
-                "cat": obj.cat,
+                "category": obj.cat,
                 "groups": list(obj.groups)
             }
         if isinstance(obj, Group):
