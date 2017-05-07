@@ -14,8 +14,15 @@ class Node:
 class Group:
     def __init__(self, name):
         self.name = name
-        self.times = []  # (day, lesson number, room if given)
+        self.lessons = []
         self.nodes = []
+
+
+class Lesson:
+    def __init__(self, day, number):
+        self.day = day
+        self.number = number
+        self.room = None
 
 
 class CustomEncoder(json.JSONEncoder):
@@ -29,8 +36,14 @@ class CustomEncoder(json.JSONEncoder):
         if isinstance(obj, Group):
             return {
                 "name": obj.name,
-                "times": obj.times,
+                "lessons": obj.lessons,
                 "nodes": obj.nodes
+            }
+        if isinstance(obj, Lesson):
+            return {
+                "day": obj.day,
+                "number": obj.number,
+                "room": obj.room
             }
         return json.JSONEncoder.default(self, obj)
 
@@ -74,10 +87,10 @@ def create_group(group_url, group_name):
         node_id = node[:node.find(" ")]
         group.nodes.append(node_id.lower())
 
-    for time in table.xpath("./tr[2]/td[2]/text()"):
-        time = time.strip()
+    for lesson in table.xpath("./tr[2]/td[2]/text()"):
+        lesson = lesson.strip()
 
-        day = time[:3]
+        day = lesson[:3]
         if day == "Pir":
             day_id = 1
         elif day == "Ant":
@@ -90,33 +103,32 @@ def create_group(group_url, group_name):
             day_id = 5
         else:
             continue
-        time = time[4:]
+        lesson = lesson[4:]
 
-        first = int(time[0])
+        first = int(lesson[0])
         last = first
-        time = time[1:]
-        if len(time) > 0 and time[0] == "-":
-            last = int(time[1])
-            time = time[2:]
-        time = time[1:]
+        lesson = lesson[1:]
+        if len(lesson) > 0 and lesson[0] == "-":
+            last = int(lesson[1])
+            lesson = lesson[2:]
+        lesson = lesson[1:]
 
-        rooms = []
-        if len(time) > 0 and time[0] == "[":
-            time = time[1:-1]
-            while True:
-                comma = time.find(",")
-                if comma != -1:
-                    rooms.append(time[:comma].lower())
-                    time = time[comma + 1:]
-                else:
-                    rooms.append(time.lower())
-                    break
-
+        lesson_index = len(group.lessons)
         for i in range(first, last + 1):
-            if len(rooms) > 0:
-                group.times.append((day_id, i, rooms[i - first]))
-            else:
-                group.times.append((day_id, i))
+            group.lessons.append(Lesson(day_id, i))
+
+        if len(lesson) > 0 and lesson[0] == "[":
+            lesson = lesson[1:-1]
+            while len(lesson) > 0:
+                comma = lesson.find(",")
+                if comma != -1:
+                    room = lesson[:comma].lower()
+                    lesson = lesson[comma + 1:]
+                else:
+                    room = lesson.lower()
+                    lesson = ""
+                group.lessons[lesson_index].room = room
+                lesson_index += 1
 
     groups[get_id(group_url, False)] = group
     return
