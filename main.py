@@ -2,6 +2,8 @@ from lxml import html
 from bs4 import UnicodeDammit
 import requests
 import json
+from queue import Queue
+from threading import Thread
 
 
 class Node:
@@ -150,6 +152,28 @@ def create_node(node_url, node_cat):
     nodes[get_id(node_url, True)] = node
     return
 
+
+def get_times(q):
+    print("Kiek minučių trunka pamoka?")
+    duration = int(input())
+    print("Įveskite pamokų pradžios laikus (formatu HH MM)")
+    times = []
+    for i in range(1, 9):
+        print("{}:".format(i), end=" ")
+        time = input().strip()
+        space = time.find(" ")
+        minutes = int(time[:space]) * 60 + int(time[space:])
+        times.append(minutes)
+        times.append(minutes + duration)
+    q.put(times)
+    print("Palaukite, kol bus parsiųsti tvarkaraščiai")
+    return
+
+queue = Queue()
+thread = Thread(target=get_times, args=[queue])
+thread.daemon = True
+thread.start()
+
 current_cat = 0
 for row in get_tree(index_url).xpath("/html/body/center[2]/center/table/tr"):
     if int(row.xpath("count(./td)")) == 1:
@@ -159,7 +183,7 @@ for row in get_tree(index_url).xpath("/html/body/center[2]/center/table/tr"):
     for link in row.xpath(".//a/@href"):
         create_node(link, current_cat)
 
-
-data = {"nodes": nodes, "groups": groups}
+data = {"times": queue.get(), "nodes": nodes, "groups": groups}
 with open("data.json", "w", encoding="utf-8") as output:
     json.dump(data, output, cls=CustomEncoder, ensure_ascii=False)
+print("Baigta")
