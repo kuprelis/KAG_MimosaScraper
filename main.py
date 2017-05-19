@@ -86,7 +86,7 @@ def create_group(group_url, group_name):
         node = node.strip()
         if len(node) == 0:
             continue
-        node_id = node[:node.find(" ")]
+        node_id = node[:node.find(" ")].replace("-", "_")
         group.nodes.append(node_id.lower())
 
     for lesson in table.xpath("./tr[2]/td[2]/text()"):
@@ -129,7 +129,7 @@ def create_group(group_url, group_name):
                 else:
                     room = lesson.lower()
                     lesson = ""
-                group.lessons[lesson_index].room = room
+                group.lessons[lesson_index].room = room.replace("-", "_")
                 lesson_index += 1
 
     groups[get_id(group_url, False)] = group
