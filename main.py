@@ -32,7 +32,7 @@ class CustomEncoder(json.JSONEncoder):
         if isinstance(obj, Node):
             return {
                 "name": obj.name,
-                "category": obj.cat,
+                "cat": obj.cat,
                 "groups": list(obj.groups)
             }
         if isinstance(obj, Group):
@@ -44,7 +44,7 @@ class CustomEncoder(json.JSONEncoder):
         if isinstance(obj, Lesson):
             return {
                 "day": obj.day,
-                "number": obj.number,
+                "num": obj.number,
                 "room": obj.room
             }
         return json.JSONEncoder.default(self, obj)
@@ -183,7 +183,30 @@ for row in get_tree(index_url).xpath("/html/body/center[2]/center/table/tr"):
     for link in row.xpath(".//a/@href"):
         create_node(link, current_cat)
 
-data = {"times": queue.get(), "nodes": nodes, "groups": groups}
+data = {"nodes": {}, "node_groups": {}, "groups": {}, "group_nodes": {}}
+
+for key in nodes:
+    val = nodes[key]
+    data["nodes"][key] = {"name": val.name, "cat": val.cat}
+
+for key in groups:
+    val = groups[key]
+    data["groups"][key] = {"name": val.name, "lessons": val.lessons}
+
+for key in nodes:
+    val = nodes[key]
+    data["node_groups"][key] = {}
+    for key_g in val.groups:
+        data["node_groups"][key][key_g] = data["groups"][key_g]
+
+for key in groups:
+    val = groups[key]
+    data["group_nodes"][key] = {}
+    for key_n in val.nodes:
+        data["group_nodes"][key][key_n] = data["nodes"][key_n]
+
+data["times"] = queue.get()
+
 with open("data.json", "w", encoding="utf-8") as output:
     json.dump(data, output, cls=CustomEncoder, ensure_ascii=False)
 print("Baigta")
