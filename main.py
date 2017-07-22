@@ -32,14 +32,12 @@ class CustomEncoder(json.JSONEncoder):
         if isinstance(obj, Node):
             return {
                 "name": obj.name,
-                "cat": obj.cat,
-                "groups": list(obj.groups)
+                "cat": obj.cat
             }
         if isinstance(obj, Group):
             return {
                 "name": obj.name,
-                "lessons": obj.lessons,
-                "nodes": obj.nodes
+                "lessons": obj.lessons
             }
         if isinstance(obj, Lesson):
             return {
@@ -183,27 +181,21 @@ for row in get_tree(index_url).xpath("/html/body/center[2]/center/table/tr"):
     for link in row.xpath(".//a/@href"):
         create_node(link, current_cat)
 
-data = {"nodes": {}, "node_groups": {}, "groups": {}, "group_nodes": {}}
+data = {"nodes": nodes, "node_groups": {}, "groups": groups, "group_nodes": {}}
 
 for key in nodes:
     val = nodes[key]
-    data["nodes"][key] = {"name": val.name, "cat": val.cat}
-
-for key in groups:
-    val = groups[key]
-    data["groups"][key] = {"name": val.name, "lessons": val.lessons}
-
-for key in nodes:
-    val = nodes[key]
-    data["node_groups"][key] = {}
+    node_groups = {}
     for key_g in val.groups:
-        data["node_groups"][key][key_g] = data["groups"][key_g]
+        node_groups[key_g] = groups[key_g]
+    data["node_groups"][key] = node_groups
 
 for key in groups:
     val = groups[key]
-    data["group_nodes"][key] = {}
+    group_nodes = {}
     for key_n in val.nodes:
-        data["group_nodes"][key][key_n] = data["nodes"][key_n]
+        group_nodes[key_n] = nodes[key_n]
+    data["group_nodes"][key] = group_nodes
 
 data["times"] = queue.get()
 
