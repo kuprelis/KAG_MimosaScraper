@@ -158,9 +158,9 @@ def get_times(q):
     times = []
     for i in range(1, 9):
         print("{}:".format(i), end=" ")
-        time = input().strip()
-        space = time.find(" ")
-        minutes = int(time[:space]) * 60 + int(time[space:])
+        time_input = input().strip()
+        space = time_input.find(" ")
+        minutes = int(time_input[:space]) * 60 + int(time_input[space:])
         times.append(minutes)
         times.append(minutes + duration)
     q.put(times)
@@ -173,15 +173,21 @@ thread.daemon = True
 thread.start()
 
 current_cat = 0
-for row in get_tree(index_url).xpath("/html/body/center[2]/center/table/tr"):
-    if int(row.xpath("count(./td)")) == 1:
+tree = get_tree(index_url)
+for row in tree.xpath("/html/body/center[2]/center/table/tr"):
+    if row.xpath("count(./td)") == 1.0:
         current_cat += 1
         continue
 
     for link in row.xpath(".//a/@href"):
         create_node(link, current_cat)
 
-data = {"nodes": nodes, "node_groups": {}, "groups": groups, "group_nodes": {}}
+header = tree.xpath("/html/body/center[1]/table")[0]
+date = header.xpath("./tr[2]/td[2]/text()")[0].strip()
+time = header.xpath("./tr[3]/td[2]/text()")[0].strip()
+timestamp = date + " " + time
+
+data = {"nodes": nodes, "node_groups": {}, "groups": groups, "group_nodes": {}, "timestamp": timestamp}
 
 for key in nodes:
     val = nodes[key]
