@@ -55,10 +55,12 @@ index_url = base_url[pos:]
 base_url = base_url[:pos]
 groups = {}
 nodes = {}
+headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                         "Chrome/60.0.3112.113 Safari/537.36"}
 
 
 def get_tree(page_url):
-    resp = requests.get(base_url + page_url.lower())
+    resp = requests.get(base_url + page_url.lower(), headers=headers)
     dammit = UnicodeDammit(resp.content, ["windows-1257"])
     tree = html.fromstring(dammit.unicode_markup)
     return tree
@@ -173,8 +175,8 @@ thread.daemon = True
 thread.start()
 
 current_cat = 0
-tree = get_tree(index_url)
-for row in tree.xpath("/html/body/center[2]/center/table/tr"):
+root = get_tree(index_url)
+for row in root.xpath("/html/body/center[2]/center/table/tr"):
     if row.xpath("count(./td)") == 1.0:
         current_cat += 1
         continue
@@ -182,7 +184,7 @@ for row in tree.xpath("/html/body/center[2]/center/table/tr"):
     for link in row.xpath(".//a/@href"):
         create_node(link, current_cat)
 
-header = tree.xpath("/html/body/center[1]/table")[0]
+header = root.xpath("/html/body/center[1]/table")[0]
 date = header.xpath("./tr[2]/td[2]/text()")[0].strip()
 time = header.xpath("./tr[3]/td[2]/text()")[0].strip()
 timestamp = date + " " + time
