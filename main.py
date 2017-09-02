@@ -82,8 +82,13 @@ def create_group(group_url, group_name):
     table = get_tree(group_url).xpath("/html/body/center[2]/table")[0]
 
     if group_name[0].isdigit():
-        space = group_name.find(" ")
-        group_name = group_name[space + 1:]
+        for index in range(1, 3):
+            char = group_name[index]
+            if char == " " or char == "-":
+                group_name = group_name[index + 1:]
+        if group_name[0].isdigit():
+            group_name = group_name[1:]
+
     group = Group(group_name)
 
     for node in table.xpath("./tr[2]/td[1]/text()"):
