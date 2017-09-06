@@ -154,6 +154,12 @@ def create_node(node_url, node_cat):
 
 
 def get_times(q):
+    print("Naudoti standartinius pamokų laikus? (T/N)")
+    response = input().strip().upper()
+    if response[0] == "T":
+        queue.put([480, 525, 535, 580, 590, 635, 645, 690, 715, 760, 780, 825, 835, 880, 890, 935])
+        return
+
     print("Kiek minučių trunka pamoka?")
     duration = int(input())
     print("Įveskite pamokų pradžios laikus (formatu HH MM)")
