@@ -1,9 +1,8 @@
+import sys
 from lxml import html
-from bs4 import UnicodeDammit
+from bs4.dammit import UnicodeDammit
 import requests
 import json
-from queue import Queue
-from threading import Thread
 
 
 class Node:
@@ -48,8 +47,9 @@ class CustomEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-print("Įveskite tvarkaraščių tinklapio index.htm adresą, pvz.: http://www.example.com/*/index.htm\n")
-base_url = input().strip()
+if len(sys.argv) != 2:
+    raise ValueError("Invalid number of arguments")
+base_url = sys.argv[1]
 pos = base_url.rfind("/") + 1
 index_url = base_url[pos:]
 base_url = base_url[:pos]
@@ -153,33 +153,6 @@ def create_node(node_url, node_cat):
     return
 
 
-def get_times(q):
-    print("Naudoti standartinius pamokų laikus? (T/N)")
-    response = input().strip().upper()
-    if response[0] == "T":
-        queue.put([480, 525, 535, 580, 590, 635, 645, 690, 715, 760, 780, 825, 835, 880, 890, 935])
-        return
-
-    print("Kiek minučių trunka pamoka?")
-    duration = int(input())
-    print("Įveskite pamokų pradžios laikus (formatu HH MM)")
-    times = []
-    for i in range(1, 9):
-        print("{}:".format(i), end=" ")
-        time_input = input().strip()
-        space = time_input.find(" ")
-        minutes = int(time_input[:space]) * 60 + int(time_input[space:])
-        times.append(minutes)
-        times.append(minutes + duration)
-    q.put(times)
-    print("Palaukite, kol bus parsiųsti tvarkaraščiai")
-    return
-
-queue = Queue()
-thread = Thread(target=get_times, args=[queue])
-thread.daemon = True
-thread.start()
-
 current_cat = 0
 root = get_tree(index_url)
 for row in root.xpath("/html/body/center[2]/center/table/tr"):
@@ -211,8 +184,7 @@ for key in groups:
         group_nodes[key_n] = nodes[key_n]
     data["group_nodes"][key] = group_nodes
 
-data["times"] = queue.get()
+data["times"] = [480, 525, 535, 580, 590, 635, 645, 690, 715, 760, 780, 825, 835, 880, 890, 935]
 
 with open("data.json", "w", encoding="utf-8") as output:
     json.dump(data, output, cls=CustomEncoder, ensure_ascii=False)
-print("Baigta")
