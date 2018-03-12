@@ -166,7 +166,7 @@ try:
     prod_ver = db.reference('/timestamp').get()
     if timestamp <= prod_ver:
         sys.exit()
-except ValueError:
+except (ValueError, TypeError):
     pass
 
 current_cat = 0
