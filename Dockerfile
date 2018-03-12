@@ -1,10 +1,9 @@
-FROM python:3
+FROM python:3-alpine
 ENV PYTHONUNBUFFERED 1
 
 RUN mkdir /code
 WORKDIR /code
-ADD requirements.txt /code/
-RUN pip install -r requirements.txt
 ADD . /code/
+RUN pip install -r requirements.txt
 
-CMD python3 main.py 'http://www.azuolynogimnazija.lt/uploads/tvark/tvark17-18_2p/index.htm'
+CMD python3 main.py

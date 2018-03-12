@@ -3,7 +3,7 @@ import firebase_admin
 from lxml import html
 from bs4.dammit import UnicodeDammit
 import requests
-from json import JSONDecoder, JSONEncoder
+from json import JSONEncoder, JSONDecoder
 from firebase_admin import db, credentials
 
 
@@ -49,19 +49,17 @@ class CustomEncoder(JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-if len(sys.argv) != 2:
-    raise ValueError('Invalid number of arguments')
-base_url = sys.argv[1]
+with open('data/timetable_url.txt') as file:
+    base_url = file.read().strip()
 pos = base_url.rfind('/') + 1
 index_url = base_url[pos:]
 base_url = base_url[:pos]
 groups = {}
 nodes = {}
-headers = {'User-Agent': ''}
 
 
 def get_tree(page_url):
-    resp = requests.get(base_url + page_url.lower(), headers=headers)
+    resp = requests.get(base_url + page_url.lower(), headers={'User-Agent': ''})
     dammit = UnicodeDammit(resp.content, ['windows-1257'])
     tree = html.fromstring(dammit.unicode_markup)
     return tree
@@ -154,8 +152,24 @@ def create_node(node_url, node_cat):
     return
 
 
-current_cat = 0
 root = get_tree(index_url)
+header = root.xpath('/html/body/center[1]/table')[0]
+date = header.xpath('./tr[2]/td[2]/text()')[0].strip()
+time = header.xpath('./tr[3]/td[2]/text()')[0].strip()
+timestamp = date + ' ' + time
+
+cred = credentials.Certificate('data/service_key.json')
+app = firebase_admin.initialize_app(cred, {'databaseURL': 'https://kagandroidapp.firebaseio.com/',
+                                           'databaseAuthVariableOverride': {'uid': 'scraper'}})
+
+try:
+    prod_ver = db.reference('/timestamp').get()
+    if timestamp <= prod_ver:
+        sys.exit()
+except ValueError:
+    pass
+
+current_cat = 0
 for row in root.xpath('/html/body/center[2]/center/table/tr'):
     if row.xpath('count(./td)') == 1.0:
         current_cat += 1
@@ -163,11 +177,6 @@ for row in root.xpath('/html/body/center[2]/center/table/tr'):
 
     for link in row.xpath('.//a/@href'):
         create_node(link, current_cat)
-
-header = root.xpath('/html/body/center[1]/table')[0]
-date = header.xpath('./tr[2]/td[2]/text()')[0].strip()
-time = header.xpath('./tr[3]/td[2]/text()')[0].strip()
-timestamp = date + ' ' + time
 
 data = {'nodes': nodes, 'node_groups': {}, 'groups': groups, 'group_nodes': {}, 'timestamp': timestamp}
 
@@ -187,9 +196,6 @@ for key in groups:
 
 data['times'] = [480, 525, 535, 580, 590, 635, 645, 690, 715, 760, 780, 825, 835, 880, 890, 935]
 
-cred = credentials.Certificate('sandboxkey.json')
-app = firebase_admin.initialize_app(cred, {'databaseURL': 'https://sandbox-c9049.firebaseio.com/',
-                                           'databaseAuthVariableOverride': {'uid': 'scraper'}})
 ref = db.reference('/', app)
 json = JSONDecoder().decode(CustomEncoder().encode(data))
 ref.set(json)
