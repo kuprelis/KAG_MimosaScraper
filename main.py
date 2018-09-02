@@ -169,10 +169,12 @@ try:
 except (ValueError, TypeError):
     pass
 
+cats = {"Mokytojai": 1, "Kabinetai": 2, "Klasės": 3, "Moksleiviai": 3}
 current_cat = 0
 for row in root.xpath('/html/body/center[2]/center/table/tr'):
     if row.xpath('count(./td)') == 1.0:
-        current_cat += 1
+        cat_name = row.xpath('.//b/text()')[0]
+        current_cat = cats[cat_name]
         continue
 
     for link in row.xpath('.//a/@href'):
