@@ -3,6 +3,7 @@ import firebase_admin
 from lxml import html
 from bs4.dammit import UnicodeDammit
 import requests
+import json
 from json import JSONEncoder, JSONDecoder
 from firebase_admin import db, credentials
 
@@ -54,6 +55,9 @@ with open('data/timetable_url.txt') as file:
 pos = base_url.rfind('/') + 1
 index_url = base_url[pos:]
 base_url = base_url[:pos]
+
+with open('data/times.json') as file:
+    times = json.loads(file.read())['times']
 groups = {}
 nodes = {}
 
@@ -180,7 +184,7 @@ for row in root.xpath('/html/body/center[2]/center/table/tr'):
     for link in row.xpath('.//a/@href'):
         create_node(link, current_cat)
 
-data = {'nodes': nodes, 'node_groups': {}, 'groups': groups, 'group_nodes': {}, 'timestamp': timestamp}
+data = {'nodes': nodes, 'node_groups': {}, 'groups': groups, 'group_nodes': {}, 'times': times, 'timestamp': timestamp}
 
 for key in nodes:
     val = nodes[key]
@@ -195,8 +199,6 @@ for key in groups:
     for key_n in val.nodes:
         group_nodes[key_n] = nodes[key_n]
     data['group_nodes'][key] = group_nodes
-
-data['times'] = [480, 525, 535, 580, 590, 635, 645, 690, 715, 760, 780, 825, 835, 880, 890, 935]
 
 ref = db.reference('/', app)
 json = JSONDecoder().decode(CustomEncoder().encode(data))
